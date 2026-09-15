@@ -3,13 +3,19 @@ from datetime import datetime
 from pydantic import BaseModel, EmailStr, Field
 
 
+# -------------------------
+# User Schemas
+# -------------------------
+
 class UserRegister(BaseModel):
     username: str = Field(
         ...,
         min_length=3,
         max_length=50
     )
+
     email: EmailStr
+
     password: str = Field(
         ...,
         min_length=6,
@@ -26,10 +32,18 @@ class UserResponse(BaseModel):
         from_attributes = True
 
 
+# -------------------------
+# Authentication
+# -------------------------
+
 class Token(BaseModel):
     access_token: str
     token_type: str
 
+
+# -------------------------
+# Post Schemas
+# -------------------------
 
 class PostCreate(BaseModel):
     title: str = Field(
@@ -37,6 +51,7 @@ class PostCreate(BaseModel):
         min_length=3,
         max_length=200
     )
+
     content: str = Field(
         ...,
         min_length=10
@@ -47,12 +62,17 @@ class PostResponse(BaseModel):
     id: int
     title: str
     content: str
+    image_url: str | None = None
     author_id: int
     created_at: datetime
 
     class Config:
         from_attributes = True
 
+
+# -------------------------
+# Comment Schemas
+# -------------------------
 
 class CommentCreate(BaseModel):
     text: str = Field(
@@ -71,6 +91,11 @@ class CommentResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# -------------------------
+# Like Schemas
+# -------------------------
 
 class LikeResponse(BaseModel):
     message: str

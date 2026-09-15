@@ -1,6 +1,14 @@
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import (
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import relationship
 
 from .database import Base
@@ -39,15 +47,26 @@ class Post(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(200), nullable=False)
     content = Column(Text, nullable=False)
+
+    # Stores uploaded image filename
+    image = Column(String(255), nullable=True)
+
     author_id = Column(
         Integer,
         ForeignKey("users.id"),
         nullable=False
     )
+
     created_at = Column(
         DateTime,
         default=datetime.utcnow
     )
+
+    @property
+    def image_url(self):
+        if self.image:
+            return f"/media/posts/{self.image}"
+        return None
 
     author = relationship(
         "User",
@@ -71,17 +90,21 @@ class Comment(Base):
     __tablename__ = "comments"
 
     id = Column(Integer, primary_key=True, index=True)
+
     post_id = Column(
         Integer,
         ForeignKey("posts.id"),
         nullable=False
     )
+
     user_id = Column(
         Integer,
         ForeignKey("users.id"),
         nullable=False
     )
+
     text = Column(Text, nullable=False)
+
     created_at = Column(
         DateTime,
         default=datetime.utcnow
@@ -102,11 +125,28 @@ class Like(Base):
     __tablename__ = "likes"
 
     id = Column(Integer, primary_key=True, index=True)
-    post_id = Column(Integer, ForeignKey("posts.id"), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
-    post = relationship("Post", back_populates="likes")
-    user = relationship("User", back_populates="likes")
+    post_id = Column(
+        Integer,
+        ForeignKey("posts.id"),
+        nullable=False
+    )
+
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False
+    )
+
+    post = relationship(
+        "Post",
+        back_populates="likes"
+    )
+
+    user = relationship(
+        "User",
+        back_populates="likes"
+    )
 
     __table_args__ = (
         UniqueConstraint(
