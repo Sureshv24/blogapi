@@ -1,11 +1,13 @@
 import os
 import uuid
+from math import ceil
 
 from fastapi import (
     APIRouter,
     Depends,
     File,
     HTTPException,
+    Query,
     UploadFile,
     status,
 )
@@ -14,7 +16,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..dependencies import get_current_user
 from ..models import Post, User
-from ..schemas import PostResponse
+from ..schemas import PostListResponse, PostResponse
 
 
 router = APIRouter(
@@ -34,11 +36,12 @@ os.makedirs(
     exist_ok=True
 )
 
-ALLOWED_IMAGE_TYPES = {
-    "image/jpeg",
-    "image/png",
-    "image/webp",
-    "image/gif",
+ALLOWED_IMAGE_EXTENSIONS = {
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".webp",
+    ".gif",
 }
 
 
@@ -48,18 +51,20 @@ ALLOWED_IMAGE_TYPES = {
 
 def save_image(image: UploadFile) -> str:
 
-    if image.content_type not in ALLOWED_IMAGE_TYPES:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Only JPG, PNG, WEBP and GIF images are allowed"
-        )
-
     original_name = image.filename or "image"
 
     extension = os.path.splitext(
         original_name
     )[1].lower()
 
+    # Validate file extension
+    if extension not in ALLOWED_IMAGE_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only JPG, JPEG, PNG, WEBP and GIF images are allowed"
+        )
+
+    # Generate unique filename
     filename = f"{uuid.uuid4().hex}{extension}"
 
     file_path = os.path.join(
@@ -67,6 +72,7 @@ def save_image(image: UploadFile) -> str:
         filename
     )
 
+    # Save uploaded image
     with open(file_path, "wb") as file:
         file.write(image.file.read())
 
@@ -130,22 +136,71 @@ def create_post(
 
 
 # -------------------------
-# Get All Posts - Public
+# Get All Posts
+# Pagination + Search
 # -------------------------
 
 @router.get(
     "",
-    response_model=list[PostResponse]
+    response_model=PostListResponse
 )
 def get_posts(
+    page: int = Query(
+        1,
+        ge=1
+    ),
+    limit: int = Query(
+        10,
+        ge=1,
+        le=100
+    ),
+    search: str | None = Query(
+        None
+    ),
     db: Session = Depends(get_db)
 ):
 
-    return (
-        db.query(Post)
-        .order_by(Post.created_at.desc())
+    query = db.query(Post)
+
+    # Search by title or content
+    if search:
+        query = query.filter(
+            (Post.title.ilike(f"%{search}%")) |
+            (Post.content.ilike(f"%{search}%"))
+        )
+
+    # Total matching posts
+    total = query.count()
+
+    # Pagination
+    posts = (
+        query
+        .order_by(
+            Post.created_at.desc()
+        )
+        .offset(
+            (page - 1) * limit
+        )
+        .limit(
+            limit
+        )
         .all()
     )
+
+    # Total pages
+    total_pages = (
+        ceil(total / limit)
+        if total > 0
+        else 1
+    )
+
+    return {
+        "posts": posts,
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "total_pages": total_pages
+    }
 
 
 # -------------------------
@@ -174,7 +229,7 @@ def get_my_posts(
 
 
 # -------------------------
-# Get Single Post - Public
+# Get Single Post
 # -------------------------
 
 @router.get(
@@ -188,7 +243,9 @@ def get_post(
 
     post = (
         db.query(Post)
-        .filter(Post.id == post_id)
+        .filter(
+            Post.id == post_id
+        )
         .first()
     )
 
@@ -222,7 +279,9 @@ def update_post(
 
     post = (
         db.query(Post)
-        .filter(Post.id == post_id)
+        .filter(
+            Post.id == post_id
+        )
         .first()
     )
 
@@ -232,15 +291,18 @@ def update_post(
             detail="Post not found"
         )
 
+    # Ownership check
     if post.author_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You can only update your own posts"
         )
 
+    # Update text fields
     post.title = title
     post.content = content
 
+    # Replace image if new image is uploaded
     if image is not None:
 
         old_image = post.image
@@ -249,6 +311,7 @@ def update_post(
 
         post.image = new_image
 
+        # Delete old image
         delete_image(old_image)
 
     db.commit()
@@ -273,7 +336,9 @@ def delete_post(
 
     post = (
         db.query(Post)
-        .filter(Post.id == post_id)
+        .filter(
+            Post.id == post_id
+        )
         .first()
     )
 
@@ -283,15 +348,17 @@ def delete_post(
             detail="Post not found"
         )
 
+    # Ownership check
     if post.author_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You can only delete your own posts"
         )
 
-    # Delete image from media folder
+    # Delete image from media/posts
     delete_image(post.image)
 
+    # Delete database record
     db.delete(post)
     db.commit()
 

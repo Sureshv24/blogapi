@@ -70,6 +70,17 @@ class PostResponse(BaseModel):
         from_attributes = True
 
 
+# ⭐ IMPORTANT:
+# PostResponse must be above PostListResponse
+
+class PostListResponse(BaseModel):
+    posts: list[PostResponse]
+    total: int
+    page: int
+    limit: int
+    total_pages: int
+
+
 # -------------------------
 # Comment Schemas
 # -------------------------
