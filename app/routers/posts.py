@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..dependencies import get_current_user
-from ..models import Post, User
+from ..models import Post, User, SubscriptionPlan
 from ..schemas import PostListResponse, PostResponse
 
 
@@ -25,9 +25,9 @@ router = APIRouter(
 )
 
 
-# -------------------------
+# =========================================================
 # Upload Configuration
-# -------------------------
+# =========================================================
 
 UPLOAD_DIR = "media/posts"
 
@@ -45,9 +45,9 @@ ALLOWED_IMAGE_EXTENSIONS = {
 }
 
 
-# -------------------------
+# =========================================================
 # Save Image
-# -------------------------
+# =========================================================
 
 def save_image(image: UploadFile) -> str:
 
@@ -79,9 +79,9 @@ def save_image(image: UploadFile) -> str:
     return filename
 
 
-# -------------------------
+# =========================================================
 # Delete Image
-# -------------------------
+# =========================================================
 
 def delete_image(filename: str | None):
 
@@ -97,9 +97,9 @@ def delete_image(filename: str | None):
         os.remove(file_path)
 
 
-# -------------------------
+# =========================================================
 # Create Post
-# -------------------------
+# =========================================================
 
 @router.post(
     "",
@@ -116,10 +116,63 @@ def create_post(
     current_user: User = Depends(get_current_user)
 ):
 
+    # =====================================================
+    # Subscription Plan Check
+    # =====================================================
+
+    if current_user.subscription_plan_id is not None:
+
+        plan = (
+            db.query(SubscriptionPlan)
+            .filter(
+                SubscriptionPlan.id ==
+                current_user.subscription_plan_id
+            )
+            .first()
+        )
+
+        if plan is not None:
+
+            # ---------------------------------------------
+            # Check Post Limit
+            # ---------------------------------------------
+
+            if plan.post_limit is not None:
+
+                post_count = (
+                    db.query(Post)
+                    .filter(
+                        Post.author_id ==
+                        current_user.id
+                    )
+                    .count()
+                )
+
+                if post_count >= plan.post_limit:
+
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=(
+                            "You've reached your plan limit. "
+                            "Kindly upgrade your plan to continue."
+                        )
+                    )
+
+    # =====================================================
+    # Image Upload
+    # =====================================================
+
     image_filename = None
 
     if image is not None:
-        image_filename = save_image(image)
+
+        image_filename = save_image(
+            image
+        )
+
+    # =====================================================
+    # Create Post
+    # =====================================================
 
     new_post = Post(
         title=title,
@@ -128,17 +181,23 @@ def create_post(
         author_id=current_user.id
     )
 
-    db.add(new_post)
+    db.add(
+        new_post
+    )
+
     db.commit()
-    db.refresh(new_post)
+
+    db.refresh(
+        new_post
+    )
 
     return new_post
 
 
-# -------------------------
+# =========================================================
 # Get All Posts
 # Pagination + Search
-# -------------------------
+# =========================================================
 
 @router.get(
     "",
@@ -160,19 +219,35 @@ def get_posts(
     db: Session = Depends(get_db)
 ):
 
-    query = db.query(Post)
+    query = db.query(
+        Post
+    )
 
+    # -----------------------------------------------------
     # Search by title or content
+    # -----------------------------------------------------
+
     if search:
+
         query = query.filter(
-            (Post.title.ilike(f"%{search}%")) |
-            (Post.content.ilike(f"%{search}%"))
+            (Post.title.ilike(
+                f"%{search}%"
+            )) |
+            (Post.content.ilike(
+                f"%{search}%"
+            ))
         )
 
+    # -----------------------------------------------------
     # Total matching posts
+    # -----------------------------------------------------
+
     total = query.count()
 
+    # -----------------------------------------------------
     # Pagination
+    # -----------------------------------------------------
+
     posts = (
         query
         .order_by(
@@ -187,9 +262,14 @@ def get_posts(
         .all()
     )
 
-    # Total pages
+    # -----------------------------------------------------
+    # Total Pages
+    # -----------------------------------------------------
+
     total_pages = (
-        ceil(total / limit)
+        ceil(
+            total / limit
+        )
         if total > 0
         else 1
     )
@@ -203,9 +283,9 @@ def get_posts(
     }
 
 
-# -------------------------
+# =========================================================
 # Get My Posts
-# -------------------------
+# =========================================================
 
 @router.get(
     "/mine",
@@ -217,9 +297,12 @@ def get_my_posts(
 ):
 
     return (
-        db.query(Post)
+        db.query(
+            Post
+        )
         .filter(
-            Post.author_id == current_user.id
+            Post.author_id ==
+            current_user.id
         )
         .order_by(
             Post.created_at.desc()
@@ -228,9 +311,9 @@ def get_my_posts(
     )
 
 
-# -------------------------
+# =========================================================
 # Get Single Post
-# -------------------------
+# =========================================================
 
 @router.get(
     "/{post_id}",
@@ -242,7 +325,9 @@ def get_post(
 ):
 
     post = (
-        db.query(Post)
+        db.query(
+            Post
+        )
         .filter(
             Post.id == post_id
         )
@@ -250,6 +335,7 @@ def get_post(
     )
 
     if post is None:
+
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Post not found"
@@ -258,9 +344,9 @@ def get_post(
     return post
 
 
-# -------------------------
+# =========================================================
 # Update Own Post
-# -------------------------
+# =========================================================
 
 @router.put(
     "/{post_id}",
@@ -278,7 +364,9 @@ def update_post(
 ):
 
     post = (
-        db.query(Post)
+        db.query(
+            Post
+        )
         .filter(
             Post.id == post_id
         )
@@ -286,43 +374,62 @@ def update_post(
     )
 
     if post is None:
+
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Post not found"
         )
 
-    # Ownership check
+    # -----------------------------------------------------
+    # Ownership Check
+    # -----------------------------------------------------
+
     if post.author_id != current_user.id:
+
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You can only update your own posts"
         )
 
-    # Update text fields
+    # -----------------------------------------------------
+    # Update Text Fields
+    # -----------------------------------------------------
+
     post.title = title
+
     post.content = content
 
-    # Replace image if new image is uploaded
+    # -----------------------------------------------------
+    # Replace Image
+    # -----------------------------------------------------
+
     if image is not None:
 
         old_image = post.image
 
-        new_image = save_image(image)
+        new_image = save_image(
+            image
+        )
 
         post.image = new_image
 
         # Delete old image
-        delete_image(old_image)
+        delete_image(
+            old_image
+        )
 
     db.commit()
-    db.refresh(post)
+
+    db.refresh(
+        post
+    )
 
     return post
 
 
-# -------------------------
+# =========================================================
 # Delete Own Post
-# -------------------------
+# =========================================================
 
 @router.delete(
     "/{post_id}",
@@ -335,7 +442,9 @@ def delete_post(
 ):
 
     post = (
-        db.query(Post)
+        db.query(
+            Post
+        )
         .filter(
             Post.id == post_id
         )
@@ -343,23 +452,39 @@ def delete_post(
     )
 
     if post is None:
+
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Post not found"
         )
 
-    # Ownership check
+    # -----------------------------------------------------
+    # Ownership Check
+    # -----------------------------------------------------
+
     if post.author_id != current_user.id:
+
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You can only delete your own posts"
         )
 
-    # Delete image from media/posts
-    delete_image(post.image)
+    # -----------------------------------------------------
+    # Delete Image
+    # -----------------------------------------------------
 
-    # Delete database record
-    db.delete(post)
+    delete_image(
+        post.image
+    )
+
+    # -----------------------------------------------------
+    # Delete Post
+    # -----------------------------------------------------
+
+    db.delete(
+        post
+    )
+
     db.commit()
 
     return None
