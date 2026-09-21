@@ -1,11 +1,21 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from datetime import datetime
+
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    HTTPException,
+    status,
+)
 from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..dependencies import get_current_user
-from ..email_service import send_email
 from ..models import Like, Post, User
 from ..schemas import LikeResponse
+from ..services.notification_service import (
+    send_like_notification,
+)
 
 
 router = APIRouter(
@@ -14,9 +24,9 @@ router = APIRouter(
 )
 
 
-# -------------------------
+# =========================================================
 # Like Post
-# -------------------------
+# =========================================================
 
 @router.post(
     "/{post_id}/like",
@@ -25,13 +35,20 @@ router = APIRouter(
 )
 def like_post(
     post_id: int,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+
+    # -----------------------------------------------------
     # Check whether post exists
+    # -----------------------------------------------------
+
     post = (
         db.query(Post)
-        .filter(Post.id == post_id)
+        .filter(
+            Post.id == post_id
+        )
         .first()
     )
 
@@ -41,7 +58,10 @@ def like_post(
             detail="Post not found"
         )
 
+    # -----------------------------------------------------
     # Check whether user already liked the post
+    # -----------------------------------------------------
+
     existing_like = (
         db.query(Like)
         .filter(
@@ -52,12 +72,16 @@ def like_post(
     )
 
     if existing_like:
+
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="You already liked this post"
         )
 
+    # -----------------------------------------------------
     # Create like
+    # -----------------------------------------------------
+
     new_like = Like(
         post_id=post_id,
         user_id=current_user.id
@@ -65,34 +89,37 @@ def like_post(
 
     db.add(new_like)
     db.commit()
+    db.refresh(new_like)
 
+    # -----------------------------------------------------
     # Get post owner
+    # -----------------------------------------------------
+
     post_owner = (
         db.query(User)
-        .filter(User.id == post.author_id)
+        .filter(
+            User.id == post.author_id
+        )
         .first()
     )
 
-    # Send email notification
-    # Do not notify when user likes their own post
+    # -----------------------------------------------------
+    # Send notification in background
+    # -----------------------------------------------------
+
+    # Don't notify user when liking own post
     if (
         post_owner is not None
         and post_owner.id != current_user.id
     ):
-        send_email(
-            # Temporary Mailtrap demo recipient
-            to_email="sureshsuresh24062004@gmail.com",
 
-            subject="New Like on Your Blog",
-
-            body=(
-                f"Hello {post_owner.username},\n\n"
-                f"{current_user.username} liked your blog post:\n\n"
-                f"Title: {post.title}\n\n"
-                f"Regards,\n"
-                f"Blog Management API"
-            )
-        )
+       background_tasks.add_task(
+    send_like_notification,
+    "sureshsuresh24062004@gmail.com",
+    post.title,
+    current_user.username,
+    datetime.utcnow()
+)
 
     return {
         "message": "Post liked successfully",
@@ -101,9 +128,9 @@ def like_post(
     }
 
 
-# -------------------------
+# =========================================================
 # Unlike Post
-# -------------------------
+# =========================================================
 
 @router.delete(
     "/{post_id}/like",
@@ -114,7 +141,11 @@ def unlike_post(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+
+    # -----------------------------------------------------
     # Find existing like
+    # -----------------------------------------------------
+
     existing_like = (
         db.query(Like)
         .filter(
@@ -125,12 +156,16 @@ def unlike_post(
     )
 
     if existing_like is None:
+
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="You have not liked this post"
         )
 
+    # -----------------------------------------------------
     # Delete like
+    # -----------------------------------------------------
+
     db.delete(existing_like)
     db.commit()
 
