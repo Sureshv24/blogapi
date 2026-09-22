@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>User Dashboard</title>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f5f7fb;
+            color: #1f2937;
+        }
+
+        .dashboard {
+            width: 92%;
+            max-width: 1250px;
+            margin: 35px auto;
+        }
+
+        /* =========================
+           HEADER
+        ========================= */
+
+        .header {
+            background: white;
+            padding: 25px 30px;
+            border-radius: 16px;
+            margin-bottom: 25px;
+
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .header p {
+            margin: 8px 0 0;
+            color: #6b7280;
+        }
+
+        .user-badge {
+            background: #eef2ff;
+            padding: 12px 18px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
+        /* =========================
+           STATISTICS CARDS
+        ========================= */
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 16px;
+
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+
+            transition: transform 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .stat-icon {
+            font-size: 28px;
+            margin-bottom: 12px;
+        }
+
+        .stat-title {
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 30px;
+            font-weight: bold;
+        }
+
+        /* =========================
+           CHARTS
+        ========================= */
+
+        .charts {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+        }
+
+        .chart-card {
+            background: white;
+            padding: 25px;
+            border-radius: 16px;
+
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+        }
+
+        .chart-card h2 {
+            margin: 0 0 20px;
+            font-size: 19px;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+        }
+
+        /* =========================
+           MESSAGE
+        ========================= */
+
+        #message {
+            text-align: center;
+            margin: 15px;
+            font-weight: bold;
+        }
+
+        .loading {
+            color: #6b7280;
+        }
+
+        .error {
+            color: #dc2626;
+        }
+
+        /* =========================
+           RESPONSIVE
+        ========================= */
+
+        @media (max-width: 1000px) {
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .charts {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+
+            .dashboard {
+                width: 94%;
+                margin: 20px auto;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .header h1 {
+                font-size: 23px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-wrapper {
+                height: 350px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <!-- =========================
+         HEADER
+    ========================= -->
+
+    <div class="header">
+
+        <div>
+
+            <h1>📊 User Dashboard</h1>
+
+            <p>
+                Track your blog activity and engagement
+            </p>
+
+        </div>
+
+        <div class="user-badge">
+
+            👤 <span id="username">User</span>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         LOADING / ERROR MESSAGE
+    ========================= -->
+
+    <div id="message" class="loading">
+        Loading dashboard...
+    </div>
+
+
+    <!-- =========================
+         STATISTICS
+    ========================= -->
+
+    <div class="stats">
+
+        <!-- Total Posts -->
+
+        <div class="stat-card">
+
+            <div class="stat-icon">
+                📝
+            </div>
+
+            <div class="stat-title">
+                Total Posts
+            </div>
+
+            <div class="stat-value" id="totalPosts">
+                0
+            </div>
+
+        </div>
+
+
+        <!-- Total Comments -->
+
+        <div class="stat-card">
+
+            <div class="stat-icon">
+                💬
+            </div>
+
+            <div class="stat-title">
+                Total Comments
+            </div>
+
+            <div class="stat-value" id="totalComments">
+                0
+            </div>
+
+        </div>
+
+
+        <!-- Total Likes -->
+
+        <div class="stat-card">
+
+            <div class="stat-icon">
+                ❤️
+            </div>
+
+            <div class="stat-title">
+                Likes Received
+            </div>
+
+            <div class="stat-value" id="totalLikes">
+                0
+            </div>
+
+        </div>
+
+
+        <!-- Total Views -->
+
+        <div class="stat-card">
+
+            <div class="stat-icon">
+                👁️
+            </div>
+
+            <div class="stat-title">
+                Total Views
+            </div>
+
+            <div class="stat-value" id="totalViews">
+                0
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         CHARTS
+    ========================= -->
+
+    <div class="charts">
+
+        <!-- =====================
+             HORIZONTAL BAR CHART
+        ====================== -->
+
+        <div class="chart-card">
+
+            <h2>
+                📈 Likes vs Comments Per Post
+            </h2>
+
+            <div class="chart-wrapper">
+
+                <canvas id="activityChart"></canvas>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================
+             DOUGHNUT CHART
+        ====================== -->
+
+        <div class="chart-card">
+
+            <h2>
+                📊 Overall Activity
+            </h2>
+
+            <div class="chart-wrapper">
+
+                <canvas id="summaryChart"></canvas>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    /*
+    =====================================================
+    JWT TOKEN
+    =====================================================
+
+    Replace this value with your JWT access token
+    obtained from:
+
+    POST /auth/login
+
+    Example:
+
+    const token = "eyJhbGciOiJIUzI1NiIs...";
+    */
+
+    const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwiZXhwIjoxNzkwMDUzMDc3fQ.c9GtR1vsA3xJ3IJM5wn3L_qCJMmkNvM2QJYMrMNz6Ho";
+
+
+    /*
+    =====================================================
+    LOAD DASHBOARD DATA
+    =====================================================
+    */
+
+    async function loadDashboard() {
+
+        const message =
+            document.getElementById("message");
+
+
+        try {
+
+            /*
+            Call FastAPI dashboard endpoint
+            */
+
+            const response = await fetch(
+                "http://127.0.0.1:8000/user/dashboard",
+                {
+                    method: "GET",
+
+                    headers: {
+
+                        "Authorization":
+                            `Bearer ${token}`,
+
+                        "Content-Type":
+                            "application/json"
+                    }
+                }
+            );
+
+
+            /*
+            Check response
+            */
+
+            if (!response.ok) {
+
+                throw new Error(
+                    `Request failed with status ${response.status}`
+                );
+
+            }
+
+
+            /*
+            Convert response to JSON
+            */
+
+            const data =
+                await response.json();
+
+
+            /*
+            =================================================
+            USER INFORMATION
+            =================================================
+            */
+
+            document.getElementById("username")
+                .textContent =
+                data.username;
+
+
+            /*
+            =================================================
+            DASHBOARD STATISTICS
+            =================================================
+            */
+
+            document.getElementById("totalPosts")
+                .textContent =
+                data.total_posts;
+
+
+            document.getElementById("totalComments")
+                .textContent =
+                data.total_comments;
+
+
+            document.getElementById("totalLikes")
+                .textContent =
+                data.total_likes_received;
+
+
+            document.getElementById("totalViews")
+                .textContent =
+                data.total_views;
+
+
+            /*
+            Remove loading message
+            */
+
+            message.textContent = "";
+
+
+            /*
+            =================================================
+            POST DATA
+            =================================================
+            */
+
+            const postTitles =
+                data.post_statistics.map(
+                    post => post.title
+                );
+
+
+            const likes =
+                data.post_statistics.map(
+                    post => post.likes
+                );
+
+
+            const comments =
+                data.post_statistics.map(
+                    post => post.comments
+                );
+
+
+            /*
+            =================================================
+            HORIZONTAL BAR CHART
+            =================================================
+            */
+
+            new Chart(
+                document.getElementById("activityChart"),
+                {
+
+                    type: "bar",
+
+                    data: {
+
+                        /*
+                        Short labels are displayed on
+                        the chart.
+                        */
+
+                        labels: postTitles.map(
+                            title => {
+
+                                if (title.length > 30) {
+
+                                    return (
+                                        title.substring(
+                                            0,
+                                            30
+                                        ) + "..."
+                                    );
+
+                                }
+
+                                return title;
+
+                            }
+                        ),
+
+
+                        datasets: [
+
+                            {
+                                label: "Likes",
+
+                                data: likes,
+
+                                borderWidth: 1
+                            },
+
+
+                            {
+                                label: "Comments",
+
+                                data: comments,
+
+                                borderWidth: 1
+                            }
+
+                        ]
+
+                    },
+
+
+                    options: {
+
+                        /*
+                        IMPORTANT:
+                        Makes the bar chart horizontal.
+                        */
+
+                        indexAxis: "y",
+
+                        responsive: true,
+
+                        maintainAspectRatio: false,
+
+
+                        /*
+                        Better tooltip interaction
+                        */
+
+                        interaction: {
+
+                            mode: "index",
+
+                            intersect: false
+
+                        },
+
+
+                        plugins: {
+
+                            legend: {
+
+                                position: "top"
+
+                            },
+
+
+                            /*
+                            Show complete post title
+                            when hovering.
+                            */
+
+                            tooltip: {
+
+                                callbacks: {
+
+                                    title:
+                                    function(context) {
+
+                                        const index =
+                                            context[0]
+                                                .dataIndex;
+
+                                        return postTitles[
+                                            index
+                                        ];
+
+                                    }
+
+                                }
+
+                            }
+
+                        },
+
+
+                        scales: {
+
+                            /*
+                            X-axis = number of likes/comments
+                            */
+
+                            x: {
+
+                                beginAtZero: true,
+
+                                ticks: {
+
+                                    stepSize: 1
+
+                                },
+
+                                title: {
+
+                                    display: true,
+
+                                    text:
+                                        "Number of Activities"
+
+                                }
+
+                            },
+
+
+                            /*
+                            Y-axis = post titles
+                            */
+
+                            y: {
+
+                                ticks: {
+
+                                    autoSkip: false
+
+                                },
+
+                                title: {
+
+                                    display: true,
+
+                                    text:
+                                        "Blog Posts"
+
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+                }
+            );
+
+
+            /*
+            =================================================
+            DOUGHNUT CHART
+            =================================================
+            */
+
+            new Chart(
+                document.getElementById("summaryChart"),
+                {
+
+                    type: "doughnut",
+
+                    data: {
+
+                        labels: [
+
+                            "Posts",
+
+                            "Comments",
+
+                            "Likes"
+
+                        ],
+
+
+                        datasets: [
+
+                            {
+
+                                data: [
+
+                                    data.total_posts,
+
+                                    data.total_comments,
+
+                                    data.total_likes_received
+
+                                ],
+
+                                borderWidth: 2
+
+                            }
+
+                        ]
+
+                    },
+
+
+                    options: {
+
+                        responsive: true,
+
+                        maintainAspectRatio: false,
+
+
+                        plugins: {
+
+                            legend: {
+
+                                position: "bottom"
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            );
+
+
+        }
+
+
+        catch (error) {
+
+            /*
+            =================================================
+            ERROR HANDLING
+            =================================================
+            */
+
+            console.error(error);
+
+
+            message.textContent =
+                "Unable to load dashboard data.";
+
+
+            message.className =
+                "error";
+
+        }
+
+    }
+
+
+    /*
+    =====================================================
+    LOAD DASHBOARD WHEN PAGE OPENS
+    =====================================================
+    */
+
+    loadDashboard();
+
+</script>
+
+</body>
+</html>
