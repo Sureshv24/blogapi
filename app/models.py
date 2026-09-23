@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import (
+    Boolean,
     Column,
     DateTime,
     ForeignKey,
@@ -9,6 +10,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
 )
+
 from sqlalchemy.orm import relationship
 
 from .database import Base
@@ -95,6 +97,16 @@ class User(Base):
 
     billing_history = relationship(
         "BillingHistory",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+
+    # -----------------------------------------
+    # Notifications
+    # -----------------------------------------
+
+    notifications = relationship(
+        "Notification",
         back_populates="user",
         cascade="all, delete-orphan"
     )
@@ -398,4 +410,66 @@ class Like(Base):
             "user_id",
             name="uq_like_post_user"
         ),
+    )
+
+
+# =========================================================
+# NOTIFICATION
+# =========================================================
+
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    # User who receives the notification
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False,
+        index=True
+    )
+
+    # Notification message
+    message = Column(
+        String(500),
+        nullable=False
+    )
+
+    # Example:
+    # like
+    # comment
+    # subscription
+    notification_type = Column(
+        String(50),
+        nullable=False,
+        index=True
+    )
+
+    # False = unread
+    # True = read
+    is_read = Column(
+        Boolean,
+        default=False,
+        nullable=False
+    )
+
+    # Notification creation time
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False
+    )
+
+    # -----------------------------------------
+    # Relationship
+    # -----------------------------------------
+
+    user = relationship(
+        "User",
+        back_populates="notifications"
     )

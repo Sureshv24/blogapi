@@ -7,12 +7,19 @@ from fastapi import (
     HTTPException,
     status,
 )
+
 from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..dependencies import get_current_user
-from ..models import Like, Post, User
+from ..models import (
+    Like,
+    Post,
+    User,
+    Notification,
+)
 from ..schemas import LikeResponse
+
 from ..services.notification_service import (
     send_like_notification,
 )
@@ -25,7 +32,7 @@ router = APIRouter(
 
 
 # =========================================================
-# Like Post
+# LIKE POST
 # =========================================================
 
 @router.post(
@@ -79,7 +86,7 @@ def like_post(
         )
 
     # -----------------------------------------------------
-    # Create like
+    # Create Like
     # -----------------------------------------------------
 
     new_like = Like(
@@ -88,11 +95,9 @@ def like_post(
     )
 
     db.add(new_like)
-    db.commit()
-    db.refresh(new_like)
 
     # -----------------------------------------------------
-    # Get post owner
+    # Get Post Owner
     # -----------------------------------------------------
 
     post_owner = (
@@ -104,22 +109,75 @@ def like_post(
     )
 
     # -----------------------------------------------------
-    # Send notification in background
+    # Create In-App Notification
     # -----------------------------------------------------
 
-    # Don't notify user when liking own post
     if (
         post_owner is not None
         and post_owner.id != current_user.id
     ):
 
-       background_tasks.add_task(
-    send_like_notification,
-    "sureshsuresh24062004@gmail.com",
-    post.title,
-    current_user.username,
-    datetime.utcnow()
-)
+        new_notification = Notification(
+            user_id=post_owner.id,
+            message=(
+                f"{current_user.username} liked "
+                f"your post '{post.title}'"
+            ),
+            notification_type="like",
+            is_read=False,
+            created_at=datetime.utcnow()
+        )
+
+        db.add(new_notification)
+
+    # -----------------------------------------------------
+    # Save Like + In-App Notification
+    # -----------------------------------------------------
+
+    db.commit()
+
+    db.refresh(new_like)
+
+    # -----------------------------------------------------
+    # EXISTING SMTP EMAIL NOTIFICATION
+    # -----------------------------------------------------
+    #
+    # IMPORTANT:
+    # This keeps your existing personal inbox.
+    #
+    # When someone likes your post, the email will still
+    # be sent to:
+    #
+    # sureshsuresh24062004@gmail.com
+    #
+    # Your existing notification_service.py will handle
+    # SMTP/Mailtrap sending.
+    # -----------------------------------------------------
+
+    if (
+        post_owner is not None
+        and post_owner.id != current_user.id
+    ):
+
+        background_tasks.add_task(
+            send_like_notification,
+
+            # Existing SMTP inbox
+            "sureshsuresh24062004@gmail.com",
+
+            # Post title
+            post.title,
+
+            # Person who liked
+            current_user.username,
+
+            # Time
+            datetime.utcnow()
+        )
+
+    # -----------------------------------------------------
+    # Response
+    # -----------------------------------------------------
 
     return {
         "message": "Post liked successfully",
@@ -129,7 +187,7 @@ def like_post(
 
 
 # =========================================================
-# Unlike Post
+# UNLIKE POST
 # =========================================================
 
 @router.delete(
@@ -143,7 +201,7 @@ def unlike_post(
 ):
 
     # -----------------------------------------------------
-    # Find existing like
+    # Find Existing Like
     # -----------------------------------------------------
 
     existing_like = (
@@ -163,11 +221,16 @@ def unlike_post(
         )
 
     # -----------------------------------------------------
-    # Delete like
+    # Delete Like
     # -----------------------------------------------------
 
     db.delete(existing_like)
+
     db.commit()
+
+    # -----------------------------------------------------
+    # Response
+    # -----------------------------------------------------
 
     return {
         "message": "Post unliked successfully",
