@@ -1140,6 +1140,104 @@
 
         }
 
+
+        /* =====================================================
+           AI SUPPORT CHAT
+        ===================================================== */
+        .ai-chat-button {
+            position: fixed;
+            right: 25px;
+            bottom: 25px;
+            width: 58px;
+            height: 58px;
+            border: none;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            font-size: 25px;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(79, 70, 229, 0.35);
+            z-index: 900;
+        }
+        .ai-chat-button:hover { transform: translateY(-2px); }
+        .ai-chat-window {
+            position: fixed;
+            right: 25px;
+            bottom: 95px;
+            width: 370px;
+            max-width: calc(100vw - 30px);
+            height: 520px;
+            max-height: calc(100vh - 120px);
+            background: white;
+            border-radius: 18px;
+            box-shadow: 0 20px 55px rgba(15, 23, 42, 0.20);
+            border: 1px solid #eef0f4;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 899;
+        }
+        .ai-chat-window.show { display: flex; animation: aiChatOpen 0.18s ease; }
+        @keyframes aiChatOpen {
+            from { opacity: 0; transform: translateY(10px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .ai-chat-header {
+            padding: 16px 18px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .ai-chat-title { display: flex; align-items: center; gap: 10px; }
+        .ai-chat-avatar {
+            width: 38px; height: 38px; border-radius: 11px;
+            background: rgba(255,255,255,0.18);
+            display: flex; align-items: center; justify-content: center; font-size: 20px;
+        }
+        .ai-chat-title h3 { font-size: 14px; margin: 0; }
+        .ai-chat-title p { font-size: 10px; margin-top: 3px; opacity: 0.8; }
+        .ai-chat-close {
+            border: none; background: transparent; color: white; font-size: 22px;
+            cursor: pointer; line-height: 1;
+        }
+        .ai-chat-messages {
+            flex: 1; overflow-y: auto; padding: 16px; background: #f8fafc;
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .ai-message {
+            max-width: 84%; padding: 10px 12px; border-radius: 13px;
+            font-size: 12px; line-height: 1.5; word-break: break-word;
+        }
+        .ai-message.bot {
+            align-self: flex-start; background: white; color: #374151;
+            border: 1px solid #e5e7eb; border-bottom-left-radius: 4px;
+        }
+        .ai-message.user {
+            align-self: flex-end; background: #4f46e5; color: white;
+            border-bottom-right-radius: 4px;
+        }
+        .ai-typing { opacity: 0.65; font-style: italic; }
+        .ai-chat-form {
+            padding: 12px; background: white; border-top: 1px solid #eef0f4;
+            display: flex; gap: 8px;
+        }
+        .ai-chat-input {
+            flex: 1; min-width: 0; border: 1px solid #dbe1ea; border-radius: 11px;
+            padding: 11px 12px; outline: none; font-size: 12px;
+        }
+        .ai-chat-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.10); }
+        .ai-chat-send {
+            width: 44px; border: none; border-radius: 11px; background: #4f46e5;
+            color: white; cursor: pointer; font-size: 17px;
+        }
+        .ai-chat-send:disabled { opacity: 0.55; cursor: not-allowed; }
+        @media (max-width: 550px) {
+            .ai-chat-window { right: 15px; bottom: 85px; width: calc(100vw - 30px); height: 500px; }
+            .ai-chat-button { right: 15px; bottom: 15px; }
+        }
+
     </style>
 
 </head>
@@ -1640,6 +1738,52 @@
         </section>
 
 
+
+
+        <!-- =====================================================
+             AI SUPPORT CHAT
+        ===================================================== -->
+        <button
+            type="button"
+            class="ai-chat-button"
+            id="aiChatButton"
+            onclick="toggleAIChat()"
+            title="AI Support"
+            aria-label="Open AI Support"
+        >
+            🤖
+        </button>
+
+        <div class="ai-chat-window" id="aiChatWindow">
+            <div class="ai-chat-header">
+                <div class="ai-chat-title">
+                    <div class="ai-chat-avatar">🤖</div>
+                    <div>
+                        <h3>AI Support Assistant</h3>
+                        <p>Ask me about your blog</p>
+                    </div>
+                </div>
+                <button type="button" class="ai-chat-close" onclick="toggleAIChat()" aria-label="Close">&times;</button>
+            </div>
+
+            <div class="ai-chat-messages" id="aiChatMessages">
+                <div class="ai-message bot">
+                    Hello! 👋 I'm your AI Support Assistant. How can I help you?
+                </div>
+            </div>
+
+            <form class="ai-chat-form" id="aiChatForm">
+                <input
+                    type="text"
+                    id="aiChatInput"
+                    class="ai-chat-input"
+                    placeholder="Ask about posts, billing, subscription..."
+                    autocomplete="off"
+                >
+                <button type="submit" class="ai-chat-send" id="aiChatSend">➤</button>
+            </form>
+        </div>
+
     </main>
 
 
@@ -1665,7 +1809,7 @@
 
 
     const token =
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwiZXhwIjoxNzkwMTQ2ODAwfQ.9aPmiJRWBA63sTyp2vUAiMerQghAYMlIDp0aLGz5lgA";
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwiZXhwIjoxNzkwMjMwMDUxfQ.tP4wBctG2VYyygjO-Q0vCjl3wve6TwqW7biXpaVRg8s";
 
 
 
@@ -2766,6 +2910,115 @@
     setInterval(
         refreshNotificationBadge,
         15000
+    );
+
+
+
+    /* =====================================================
+       AI SUPPORT CHAT
+
+       Uses the existing JWT token and the existing backend
+       endpoint: POST /api/ai-support/
+       No history endpoint is used.
+    ===================================================== */
+
+    function toggleAIChat() {
+        const windowEl = document.getElementById("aiChatWindow");
+        const input = document.getElementById("aiChatInput");
+
+        windowEl.classList.toggle("show");
+
+        if (windowEl.classList.contains("show")) {
+            setTimeout(() => input.focus(), 100);
+        }
+    }
+
+    function addAIChatMessage(text, type) {
+        const messages = document.getElementById("aiChatMessages");
+        const message = document.createElement("div");
+
+        message.className = `ai-message ${type}`;
+        message.textContent = text;
+
+        messages.appendChild(message);
+        messages.scrollTop = messages.scrollHeight;
+
+        return message;
+    }
+
+    async function sendAIMessage() {
+        const input = document.getElementById("aiChatInput");
+        const sendButton = document.getElementById("aiChatSend");
+        const message = input.value.trim();
+
+        if (!message) {
+            return;
+        }
+
+        addAIChatMessage(message, "user");
+        input.value = "";
+        input.disabled = true;
+        sendButton.disabled = true;
+
+        const typingMessage = addAIChatMessage("AI is typing...", "bot");
+        typingMessage.classList.add("ai-typing");
+
+        try {
+            const response = await fetch(
+                "http://127.0.0.1:8000/api/ai-support/",
+                {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        message: message
+                    })
+                }
+            );
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    throw new Error("Authentication failed. Please login again or use a fresh JWT token.");
+                }
+
+                let errorMessage = `AI Support request failed: ${response.status}`;
+
+                try {
+                    const errorData = await response.json();
+                    if (errorData.detail) {
+                        errorMessage = errorData.detail;
+                    }
+                } catch (_) {
+                    // Keep the default error message.
+                }
+
+                throw new Error(errorMessage);
+            }
+
+            const data = await response.json();
+            typingMessage.remove();
+            addAIChatMessage(data.response || "Sorry, I could not generate a response.", "bot");
+        }
+        catch (error) {
+            console.error("AI Support error:", error);
+            typingMessage.remove();
+            addAIChatMessage(`⚠️ ${error.message || "Unable to contact AI Support."}`, "bot");
+        }
+        finally {
+            input.disabled = false;
+            sendButton.disabled = false;
+            input.focus();
+        }
+    }
+
+    document.getElementById("aiChatForm").addEventListener(
+        "submit",
+        function(event) {
+            event.preventDefault();
+            sendAIMessage();
+        }
     );
 
 

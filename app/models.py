@@ -1,3 +1,4 @@
+
 from datetime import datetime
 
 from sqlalchemy import (
@@ -101,12 +102,18 @@ class User(Base):
         cascade="all, delete-orphan"
     )
 
-    # -----------------------------------------
-    # Notifications
-    # -----------------------------------------
-
     notifications = relationship(
         "Notification",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+
+    # -----------------------------------------
+    # AI Support Chat History
+    # -----------------------------------------
+
+    ai_chat_history = relationship(
+        "AIChatHistory",
         back_populates="user",
         cascade="all, delete-orphan"
     )
@@ -305,6 +312,10 @@ class Post(Base):
 
         return None
 
+    # -----------------------------------------
+    # Relationships
+    # -----------------------------------------
+
     author = relationship(
         "User",
         back_populates="posts"
@@ -358,6 +369,10 @@ class Comment(Base):
         default=datetime.utcnow
     )
 
+    # -----------------------------------------
+    # Relationships
+    # -----------------------------------------
+
     post = relationship(
         "Post",
         back_populates="comments"
@@ -394,6 +409,10 @@ class Like(Base):
         nullable=False
     )
 
+    # -----------------------------------------
+    # Relationships
+    # -----------------------------------------
+
     post = relationship(
         "Post",
         back_populates="likes"
@@ -403,6 +422,10 @@ class Like(Base):
         "User",
         back_populates="likes"
     )
+
+    # -----------------------------------------
+    # Prevent duplicate likes
+    # -----------------------------------------
 
     __table_args__ = (
         UniqueConstraint(
@@ -426,7 +449,7 @@ class Notification(Base):
         index=True
     )
 
-    # User who receives the notification
+    # User who receives notification
     user_id = Column(
         Integer,
         ForeignKey("users.id"),
@@ -440,7 +463,7 @@ class Notification(Base):
         nullable=False
     )
 
-    # Example:
+    # Examples:
     # like
     # comment
     # subscription
@@ -458,7 +481,6 @@ class Notification(Base):
         nullable=False
     )
 
-    # Notification creation time
     created_at = Column(
         DateTime,
         default=datetime.utcnow,
@@ -473,3 +495,56 @@ class Notification(Base):
         "User",
         back_populates="notifications"
     )
+
+
+# =========================================================
+# AI SUPPORT CHAT HISTORY
+# =========================================================
+
+class AIChatHistory(Base):
+    __tablename__ = "ai_chat_history"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    # User who asked the question
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False,
+        index=True
+    )
+
+    # IMPORTANT:
+    # Existing SQLite database column is "question"
+    # Keep this name exactly as "question".
+    question = Column(
+        Text,
+        nullable=False
+    )
+
+    # AI generated response
+    ai_response = Column(
+        Text,
+        nullable=False
+    )
+
+    # Chat timestamp
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False
+    )
+
+    # -----------------------------------------
+    # Relationship
+    # -----------------------------------------
+
+    user = relationship(
+        "User",
+        back_populates="ai_chat_history"
+    )
+
