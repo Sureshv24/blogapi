@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <title>Login - Blog Management</title>
+
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+
+        body {
+
+            min-height: 100vh;
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            background: #f4f6f9;
+        }
+
+
+        .auth-container {
+
+            width: 100%;
+
+            max-width: 420px;
+
+            background: white;
+
+            padding: 35px;
+
+            border-radius: 12px;
+
+            box-shadow:
+                0 8px 30px rgba(0, 0, 0, 0.08);
+        }
+
+
+        .logo {
+
+            text-align: center;
+
+            margin-bottom: 10px;
+
+            font-size: 28px;
+
+            font-weight: bold;
+
+            color: #2563eb;
+        }
+
+
+        .subtitle {
+
+            text-align: center;
+
+            color: #6b7280;
+
+            margin-bottom: 25px;
+        }
+
+
+        .tabs {
+
+            display: flex;
+
+            margin-bottom: 25px;
+
+            border-bottom: 1px solid #ddd;
+        }
+
+
+        .tab {
+
+            width: 50%;
+
+            padding: 12px;
+
+            border: none;
+
+            background: transparent;
+
+            font-size: 16px;
+
+            cursor: pointer;
+
+            color: #777;
+        }
+
+
+        .tab.active {
+
+            color: #2563eb;
+
+            border-bottom:
+                2px solid #2563eb;
+
+            font-weight: bold;
+        }
+
+
+        .form-group {
+
+            margin-bottom: 18px;
+        }
+
+
+        .form-group label {
+
+            display: block;
+
+            margin-bottom: 7px;
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+            color: #374151;
+        }
+
+
+        .form-group input {
+
+            width: 100%;
+
+            padding: 12px;
+
+            border:
+                1px solid #d1d5db;
+
+            border-radius: 7px;
+
+            outline: none;
+
+            font-size: 14px;
+        }
+
+
+        .form-group input:focus {
+
+            border-color: #2563eb;
+        }
+
+
+        .primary-btn {
+
+            width: 100%;
+
+            padding: 13px;
+
+            border: none;
+
+            border-radius: 7px;
+
+            background: #2563eb;
+
+            color: white;
+
+            font-size: 16px;
+
+            font-weight: 600;
+
+            cursor: pointer;
+
+            margin-top: 5px;
+        }
+
+
+        .primary-btn:hover {
+
+            background: #1d4ed8;
+        }
+
+
+        .divider {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+            margin: 25px 0;
+
+            color: #9ca3af;
+
+            font-size: 13px;
+        }
+
+
+        .divider::before,
+        .divider::after {
+
+            content: "";
+
+            flex: 1;
+
+            height: 1px;
+
+            background: #e5e7eb;
+        }
+
+
+        .social-btn {
+
+            width: 100%;
+
+            padding: 12px;
+
+            border:
+                1px solid #d1d5db;
+
+            border-radius: 7px;
+
+            background: white;
+
+            cursor: pointer;
+
+            font-size: 15px;
+
+            margin-bottom: 10px;
+
+            font-weight: 500;
+        }
+
+
+        .social-btn:hover {
+
+            background: #f9fafb;
+        }
+
+
+        .google {
+
+            color: #333;
+        }
+
+
+        .facebook {
+
+            color: #1877f2;
+        }
+
+
+        .message {
+
+            margin-top: 15px;
+
+            text-align: center;
+
+            font-size: 14px;
+
+            color: #dc2626;
+        }
+
+
+        .hidden {
+
+            display: none;
+        }
+
+
+        .footer-text {
+
+            text-align: center;
+
+            margin-top: 20px;
+
+            font-size: 13px;
+
+            color: #6b7280;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="auth-container">
+
+
+    <div class="logo">
+        Blog Management
+    </div>
+
+
+    <div class="subtitle">
+        Welcome back
+    </div>
+
+
+    <!-- LOGIN / SIGNUP TABS -->
+
+    <div class="tabs">
+
+        <button
+            class="tab active"
+            id="loginTab"
+            onclick="showLogin()">
+
+            Login
+
+        </button>
+
+
+        <button
+            class="tab"
+            id="signupTab"
+            onclick="showSignup()">
+
+            Signup
+
+        </button>
+
+    </div>
+
+
+
+    <!-- LOGIN FORM -->
+
+    <form id="loginForm">
+
+
+        <div class="form-group">
+
+            <label for="loginEmail">
+                Email
+            </label>
+
+
+            <input
+                type="email"
+                id="loginEmail"
+                placeholder="Enter your email"
+                required>
+
+        </div>
+
+
+
+        <div class="form-group">
+
+            <label for="loginPassword">
+                Password
+            </label>
+
+
+            <input
+                type="password"
+                id="loginPassword"
+                placeholder="Enter your password"
+                required>
+
+        </div>
+
+
+
+        <button
+            type="submit"
+            class="primary-btn">
+
+            Login
+
+        </button>
+
+
+    </form>
+
+
+
+    <!-- SIGNUP FORM -->
+
+    <form
+        id="signupForm"
+        class="hidden">
+
+
+        <div class="form-group">
+
+            <label for="signupName">
+                Name
+            </label>
+
+
+            <input
+                type="text"
+                id="signupName"
+                placeholder="Enter your name"
+                required>
+
+        </div>
+
+
+
+        <div class="form-group">
+
+            <label for="signupEmail">
+                Email
+            </label>
+
+
+            <input
+                type="email"
+                id="signupEmail"
+                placeholder="Enter your email"
+                required>
+
+        </div>
+
+
+
+        <div class="form-group">
+
+            <label for="signupPassword">
+                Password
+            </label>
+
+
+            <input
+                type="password"
+                id="signupPassword"
+                placeholder="Create a password"
+                required>
+
+        </div>
+
+
+
+        <button
+            type="submit"
+            class="primary-btn">
+
+            Create Account
+
+        </button>
+
+
+    </form>
+
+
+
+    <!-- SOCIAL LOGIN -->
+
+    <div class="divider">
+        OR
+    </div>
+
+
+
+    <!-- GOOGLE -->
+
+    <button
+        class="social-btn google"
+        id="googleLogin">
+
+        Continue with Google
+
+    </button>
+
+
+
+    <!-- FACEBOOK -->
+
+    <button
+        class="social-btn facebook"
+        id="facebookLogin">
+
+        Continue with Facebook
+
+    </button>
+
+
+
+    <div
+        id="message"
+        class="message">
+    </div>
+
+
+
+    <div class="footer-text">
+
+        Secure authentication for Blog Management
+
+    </div>
+
+
+</div>
+
+
+
+<script>
+
+
+    const API_BASE_URL =
+        "http://127.0.0.1:8000";
+
+
+
+    // =====================================================
+    // LOGIN / SIGNUP TAB SWITCHING
+    // =====================================================
+
+
+    function showLogin() {
+
+        document
+            .getElementById("loginForm")
+            .classList
+            .remove("hidden");
+
+
+        document
+            .getElementById("signupForm")
+            .classList
+            .add("hidden");
+
+
+        document
+            .getElementById("loginTab")
+            .classList
+            .add("active");
+
+
+        document
+            .getElementById("signupTab")
+            .classList
+            .remove("active");
+
+
+        document
+            .querySelector(".subtitle")
+            .textContent =
+            "Welcome back";
+
+
+        clearMessage();
+    }
+
+
+
+    function showSignup() {
+
+        document
+            .getElementById("signupForm")
+            .classList
+            .remove("hidden");
+
+
+        document
+            .getElementById("loginForm")
+            .classList
+            .add("hidden");
+
+
+        document
+            .getElementById("signupTab")
+            .classList
+            .add("active");
+
+
+        document
+            .getElementById("loginTab")
+            .classList
+            .remove("active");
+
+
+        document
+            .querySelector(".subtitle")
+            .textContent =
+            "Create your account";
+
+
+        clearMessage();
+    }
+
+
+
+    // =====================================================
+    // MESSAGE
+    // =====================================================
+
+
+    function showMessage(
+        message,
+        isError = true
+    ) {
+
+        const messageElement =
+            document.getElementById("message");
+
+
+        messageElement.textContent =
+            message;
+
+
+        messageElement.style.color =
+            isError
+                ? "#dc2626"
+                : "#16a34a";
+    }
+
+
+
+    function clearMessage() {
+
+        document
+            .getElementById("message")
+            .textContent = "";
+    }
+
+
+
+    // =====================================================
+    // NORMAL LOGIN
+    // =====================================================
+
+
+    document
+        .getElementById("loginForm")
+        .addEventListener(
+            "submit",
+            async function(event) {
+
+                event.preventDefault();
+
+                clearMessage();
+
+
+                const email =
+                    document
+                        .getElementById("loginEmail")
+                        .value
+                        .trim();
+
+
+                const password =
+                    document
+                        .getElementById("loginPassword")
+                        .value;
+
+
+                if (!email || !password) {
+
+                    showMessage(
+                        "Please enter your email and password."
+                    );
+
+                    return;
+                }
+
+
+                try {
+
+                    showMessage(
+                        "Logging in...",
+                        false
+                    );
+
+
+                    const formData =
+                        new URLSearchParams();
+
+
+                    formData.append(
+                        "username",
+                        email
+                    );
+
+
+                    formData.append(
+                        "password",
+                        password
+                    );
+
+
+                    const response =
+                        await fetch(
+                            `${API_BASE_URL}/auth/login`,
+                            {
+                                method: "POST",
+
+                                headers: {
+                                    "Content-Type":
+                                        "application/x-www-form-urlencoded"
+                                },
+
+                                body: formData
+                            }
+                        );
+
+
+                    const data =
+                        await response.json();
+
+
+                    if (!response.ok) {
+
+                        showMessage(
+                            data.detail ||
+                            "Invalid email or password."
+                        );
+
+                        return;
+                    }
+
+
+                    localStorage.setItem(
+                        "access_token",
+                        data.access_token
+                    );
+
+
+                    showMessage(
+                        "Login successful! Redirecting...",
+                        false
+                    );
+
+
+                    setTimeout(
+                        function() {
+
+                            window.location.href =
+                                "/dashboard/index.html";
+
+                        },
+                        800
+                    );
+
+
+                } catch (error) {
+
+                    console.error(error);
+
+
+                    showMessage(
+                        "Unable to connect to the server. " +
+                        "Please make sure FastAPI is running."
+                    );
+                }
+
+            }
+        );
+
+
+
+    // =====================================================
+    // NORMAL SIGNUP
+    // =====================================================
+
+
+    document
+        .getElementById("signupForm")
+        .addEventListener(
+            "submit",
+            async function(event) {
+
+                event.preventDefault();
+
+                clearMessage();
+
+
+                const name =
+                    document
+                        .getElementById("signupName")
+                        .value
+                        .trim();
+
+
+                const email =
+                    document
+                        .getElementById("signupEmail")
+                        .value
+                        .trim();
+
+
+                const password =
+                    document
+                        .getElementById("signupPassword")
+                        .value;
+
+
+                if (!name || !email || !password) {
+
+                    showMessage(
+                        "Please fill all fields."
+                    );
+
+                    return;
+                }
+
+
+                try {
+
+                    showMessage(
+                        "Creating your account...",
+                        false
+                    );
+
+
+                    const response =
+                        await fetch(
+                            `${API_BASE_URL}/auth/register`,
+                            {
+                                method: "POST",
+
+                                headers: {
+                                    "Content-Type":
+                                        "application/json"
+                                },
+
+                                body: JSON.stringify({
+
+                                    username: name,
+
+                                    email: email,
+
+                                    password: password
+
+                                })
+                            }
+                        );
+
+
+                    const data =
+                        await response.json();
+
+
+                    if (!response.ok) {
+
+                        showMessage(
+                            data.detail ||
+                            "Unable to create account."
+                        );
+
+                        return;
+                    }
+
+
+                    showMessage(
+                        "Account created successfully! Please login.",
+                        false
+                    );
+
+
+                    setTimeout(
+                        function() {
+
+                            showLogin();
+
+
+                            document
+                                .getElementById("loginEmail")
+                                .value =
+                                email;
+
+                        },
+                        1000
+                    );
+
+
+                } catch (error) {
+
+                    console.error(error);
+
+
+                    showMessage(
+                        "Unable to connect to the server."
+                    );
+                }
+
+            }
+        );
+
+
+
+    // =====================================================
+    // GOOGLE AUTH0 LOGIN
+    // =====================================================
+
+
+    document
+        .getElementById("googleLogin")
+        .addEventListener(
+            "click",
+            function() {
+
+                console.log(
+                    "Starting Google login..."
+                );
+
+
+                window.location.href =
+                    `${API_BASE_URL}/auth/auth0/login`;
+
+            }
+        );
+
+
+
+    // =====================================================
+    // FACEBOOK AUTH0 LOGIN
+    // =====================================================
+
+
+    document
+        .getElementById("facebookLogin")
+        .addEventListener(
+            "click",
+            function() {
+
+                console.log(
+                    "Starting Facebook login..."
+                );
+
+
+                window.location.href =
+                    `${API_BASE_URL}/auth/facebook/login`;
+
+            }
+        );
+
+
+</script>
+
+
+</body>
+
+</html>

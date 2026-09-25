@@ -1808,10 +1808,17 @@
     ===================================================== */
 
 
-    const token =
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwiZXhwIjoxNzkwMjMwMDUxfQ.tP4wBctG2VYyygjO-Q0vCjl3wve6TwqW7biXpaVRg8s";
+    // =====================================================
+// JWT TOKEN
+// Get the token saved during login
+// =====================================================
 
+const token = localStorage.getItem("access_token");
 
+// If no token exists, send user back to login page
+if (!token) {
+    window.location.href = "/dashboard/login.html";
+}
 
     /* =====================================================
        CHART REFERENCES

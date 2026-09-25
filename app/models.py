@@ -1,4 +1,3 @@
-
 from datetime import datetime
 
 from sqlalchemy import (
@@ -44,9 +43,13 @@ class User(Base):
         index=True
     )
 
+    # ---------------------------------------------------------
+    # Password is NULL for Auth0 / Google / Facebook users
+    # ---------------------------------------------------------
+
     password = Column(
         String(255),
-        nullable=False
+        nullable=True
     )
 
     # -----------------------------------------
@@ -521,6 +524,7 @@ class AIChatHistory(Base):
     # IMPORTANT:
     # Existing SQLite database column is "question"
     # Keep this name exactly as "question".
+
     question = Column(
         Text,
         nullable=False
