@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blog Management - Create Post</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,Arial,Helvetica,sans-serif;background:#f4f7fb;color:#172033}
+.app{display:flex;min-height:100vh}
+.sidebar{width:250px;background:#111827;color:#fff;padding:28px 18px;position:fixed;left:0;top:0;bottom:0;display:flex;flex-direction:column}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:32px}.brand-icon{width:34px;height:34px;border-radius:10px;background:#4f46e5;display:flex;align-items:center;justify-content:center}.brand-text h2{font-size:15px}.brand-text span{font-size:9px;color:#9ca3af}.nav-title{font-size:9px;text-transform:uppercase;color:#6b7280;letter-spacing:1px;margin-bottom:10px}.nav-item{display:flex;align-items:center;gap:10px;color:#d1d5db;text-decoration:none;padding:11px 12px;border-radius:8px;margin-bottom:6px;font-size:12px}.nav-item:hover{background:#1f2937}.nav-item.active{background:#4338ca;color:#fff}.sidebar-bottom{margin-top:auto;color:#9ca3af;font-size:9px;line-height:1.5}
+.main{margin-left:250px;width:calc(100% - 250px);padding:34px 42px}.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}.topbar h1{font-size:25px}.topbar p{color:#6b7280;font-size:12px;margin-top:5px}.back{color:#4f46e5;text-decoration:none;font-size:12px;font-weight:600}
+.card{background:#fff;border-radius:16px;box-shadow:0 4px 18px rgba(0,0,0,.06);padding:28px;max-width:900px}.field{margin-bottom:20px}.field label{display:block;font-size:12px;font-weight:700;margin-bottom:8px}.field input,.field textarea{width:100%;border:1px solid #d8dee9;border-radius:9px;padding:12px;font:inherit;font-size:13px;outline:none}.field input:focus,.field textarea:focus{border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,.1)}textarea{min-height:220px;resize:vertical}
+.options{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.option{border:1px solid #d8dee9;border-radius:12px;padding:16px;cursor:pointer;transition:.15s}.option input{display:none}.option strong{display:block;font-size:13px;margin-bottom:5px}.option span{display:block;font-size:11px;color:#6b7280}.option.selected{border-color:#4f46e5;background:#f5f3ff;box-shadow:0 0 0 2px rgba(79,70,229,.08)}
+.schedule-box{display:none;margin-top:15px;padding:16px;border-radius:12px;background:#f8fafc;border:1px solid #e5e7eb}.schedule-box.show{display:block}.schedule-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.hint{font-size:11px;color:#6b7280;margin-top:7px}.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:24px}.btn{border:0;border-radius:9px;padding:12px 20px;font-size:12px;font-weight:700;cursor:pointer}.btn.secondary{background:#eef2f7;color:#374151}.btn.primary{background:#4f46e5;color:#fff}.btn:disabled{opacity:.6;cursor:not-allowed}.message{display:none;margin-bottom:18px;padding:12px;border-radius:9px;font-size:12px}.message.show{display:block}.message.error{background:#fef2f2;color:#b91c1c}.message.success{background:#ecfdf5;color:#047857}
+@media(max-width:750px){.sidebar{width:70px;padding:22px 10px}.brand-text,.nav-title,.nav-item span:last-child,.sidebar-bottom{display:none}.brand{justify-content:center}.nav-item{justify-content:center}.main{margin-left:70px;width:calc(100% - 70px);padding:22px}.options,.schedule-grid{grid-template-columns:1fr}.topbar{gap:12px;align-items:flex-start}.topbar h1{font-size:20px}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="brand"><div class="brand-icon">📊</div><div class="brand-text"><h2>Blog Analytics</h2><span>User Dashboard</span></div></div>
+  <div class="nav-title">Overview</div>
+  <a href="/dashboard/" class="nav-item"><span>📈</span><span>Dashboard</span></a>
+  <a href="/dashboard/create_post.html" class="nav-item active"><span>✍️</span><span>Create Post</span></a>
+  <a href="/docs" class="nav-item"><span>⚡</span><span>API Docs</span></a>
+  <div class="sidebar-bottom">Blog Management API<br>Analytics Dashboard</div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div><h1 id="pageTitle">Create Blog Post</h1><p>Choose how and when you want your post to be published.</p></div>
+    <a href="/dashboard/" class="back">← Back to Dashboard</a>
+  </div>
+
+  <div id="message" class="message"></div>
+
+  <form id="postForm" class="card">
+    <div class="field"><label for="title">Title</label><input id="title" name="title" type="text" maxlength="200" required placeholder="Enter your blog title"></div>
+    <div class="field"><label for="content">Content</label><textarea id="content" name="content" required placeholder="Write your blog content..."></textarea></div>
+
+    <div class="field">
+      <label>Publish Options</label>
+      <div class="options">
+        <label class="option selected" data-option="published"><input type="radio" name="publishOption" value="published" checked><strong>🚀 Publish Now</strong><span>Publish the post immediately.</span></label>
+        <label class="option" data-option="draft"><input type="radio" name="publishOption" value="draft"><strong>📝 Save as Draft</strong><span>Keep the post unpublished.</span></label>
+        <label class="option" data-option="scheduled"><input type="radio" name="publishOption" value="scheduled"><strong>🗓️ Schedule Post</strong><span>Publish automatically at a future time.</span></label>
+      </div>
+
+      <div id="scheduleBox" class="schedule-box">
+        <div class="schedule-grid">
+          <div><label for="scheduleDate">Date</label><input id="scheduleDate" type="date"></div>
+          <div><label for="scheduleTime">Time</label><input id="scheduleTime" type="time"></div>
+        </div>
+        <div class="hint">The selected date and time use your computer's local time. It will be converted to UTC before sending to the API.</div>
+      </div>
+    </div>
+
+    <div class="field"><label for="image">Featured Image (optional)</label><input id="image" type="file" accept=".jpg,.jpeg,.png,.webp,.gif"></div>
+
+    <div class="actions"><button type="button" class="btn secondary" onclick="location.href='/dashboard/'">Cancel</button><button id="submitBtn" type="submit" class="btn primary">Create Post</button></div>
+  </form>
+</main>
+</div>
+
+<script>
+const API_BASE = "http://127.0.0.1:8000";
+const token = localStorage.getItem("blog_jwt");
+const params = new URLSearchParams(location.search);
+const editId = params.get("id");
+
+const form = document.getElementById("postForm");
+const scheduleBox = document.getElementById("scheduleBox");
+const dateInput = document.getElementById("scheduleDate");
+const timeInput = document.getElementById("scheduleTime");
+const message = document.getElementById("message");
+const submitBtn = document.getElementById("submitBtn");
+
+function showMessage(text, type) {
+  message.textContent = text;
+  message.className = `message show ${type}`;
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function getSelectedOption() {
+  return document.querySelector('input[name="publishOption"]:checked').value;
+}
+
+function refreshOptionUI() {
+  const selected = getSelectedOption();
+  document.querySelectorAll('.option').forEach(el => el.classList.toggle('selected', el.dataset.option === selected));
+  scheduleBox.classList.toggle('show', selected === 'scheduled');
+  dateInput.required = selected === 'scheduled';
+  timeInput.required = selected === 'scheduled';
+}
+
+document.querySelectorAll('input[name="publishOption"]').forEach(radio => radio.addEventListener('change', refreshOptionUI));
+
+function setScheduleMinimum() {
+  const now = new Date();
+  const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0,10);
+  dateInput.min = localDate;
+}
+
+function localDateTimeToUtcNaive(dateValue, timeValue) {
+  const local = new Date(`${dateValue}T${timeValue}`);
+  if (Number.isNaN(local.getTime())) throw new Error("Please select a valid schedule date and time.");
+  if (local <= new Date()) throw new Error("Scheduled date and time must be in the future.");
+  // Backend stores naive UTC in SQLite.
+  return local.toISOString().slice(0,19);
+}
+
+function utcNaiveToLocalInputs(value) {
+  if (!value) return;
+  // Backend returns UTC-naive values such as "2026-09-28 10:45:44.876000".
+  const normalized = value.replace(' ', 'T').replace(/(\.\d{3})\d+$/, '$1') + 'Z';
+  const d = new Date(normalized);
+  if (Number.isNaN(d.getTime())) return;
+  const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+  dateInput.value = local.toISOString().slice(0,10);
+  timeInput.value = local.toISOString().slice(11,16);
+}
+
+async function loadEditPost() {
+  if (!editId) return;
+  document.getElementById('pageTitle').textContent = 'Edit Blog Post';
+  submitBtn.textContent = 'Update Post';
+
+  if (!token) {
+    showMessage('Authentication token not found. Open the dashboard first, then return here.', 'error');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/posts/${editId}`, {headers:{Authorization:`Bearer ${token}`}});
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || `Failed to load post (${res.status})`);
+    document.getElementById('title').value = data.title || '';
+    document.getElementById('content').value = data.content || '';
+    const status = data.status || 'published';
+    const radio = document.querySelector(`input[name="publishOption"][value="${status}"]`);
+    if (radio) radio.checked = true;
+    refreshOptionUI();
+    if (status === 'scheduled') utcNaiveToLocalInputs(data.scheduled_at);
+  } catch (err) {
+    showMessage(err.message, 'error');
+  }
+}
+
+form.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  if (!token) {
+    showMessage('Authentication token not found. Open /dashboard/ first and try again.', 'error');
+    return;
+  }
+
+  const status = getSelectedOption();
+  let scheduledAt = null;
+  try {
+    if (status === 'scheduled') {
+      scheduledAt = localDateTimeToUtcNaive(dateInput.value, timeInput.value);
+    }
+  } catch (err) {
+    showMessage(err.message, 'error');
+    return;
+  }
+
+  const fd = new FormData();
+  fd.append('title', document.getElementById('title').value.trim());
+  fd.append('content', document.getElementById('content').value.trim());
+  fd.append('post_status', status);
+  if (scheduledAt) fd.append('scheduled_at', scheduledAt);
+  const image = document.getElementById('image').files[0];
+  if (image) fd.append('image', image);
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = editId ? 'Updating...' : 'Creating...';
+  message.className = 'message';
+
+  try {
+    const url = editId ? `${API_BASE}/posts/${editId}` : `${API_BASE}/posts`;
+    const res = await fetch(url, {
+      method: editId ? 'PUT' : 'POST',
+      headers: {Authorization:`Bearer ${token}`},
+      body: fd
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || `Request failed (${res.status})`);
+
+    const successText = status === 'scheduled'
+      ? 'Post scheduled successfully. Celery will publish it automatically at the selected time.'
+      : status === 'draft'
+        ? 'Post saved as draft successfully.'
+        : 'Post published successfully.';
+    showMessage(successText, 'success');
+    if (!editId) form.reset();
+    document.querySelector('input[name="publishOption"][value="published"]').checked = true;
+    refreshOptionUI();
+    setScheduleMinimum();
+    submitBtn.textContent = editId ? 'Update Post' : 'Create Post';
+  } catch (err) {
+    showMessage(err.message, 'error');
+    submitBtn.textContent = editId ? 'Update Post' : 'Create Post';
+  } finally {
+    submitBtn.disabled = false;
+  }
+});
+
+setScheduleMinimum();
+refreshOptionUI();
+loadEditPost();
+</script>
+</body>
+</html>
