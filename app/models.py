@@ -1,3 +1,4 @@
+
 from datetime import datetime
 
 from sqlalchemy import (
@@ -306,6 +307,32 @@ class Post(Base):
     created_at = Column(
         DateTime,
         default=datetime.utcnow
+    )
+
+    # -----------------------------------------
+    # Scheduled Publishing
+    # -----------------------------------------
+
+    # Possible values:
+    # published
+    # draft
+    # scheduled
+    status = Column(
+        String(20),
+        nullable=False,
+        default="published"
+    )
+
+    # Future date/time when the post should be published
+    scheduled_at = Column(
+        DateTime,
+        nullable=True
+    )
+
+    # Date/time when the post was actually published
+    published_at = Column(
+        DateTime,
+        nullable=True
     )
 
     @property
